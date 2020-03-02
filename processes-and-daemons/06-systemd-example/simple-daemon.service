@@ -1,0 +1,14 @@
+[Unit]
+Description=A simple daemon service
+After=syslog.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=rlucente
+ExecStart=/usr/local/bin/simple-daemon
+
+[Install]
+WantedBy=multi-user.target

@@ -1,17 +1,8 @@
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
 #include <syslog.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include "util.h"
-
-void die (int linenum, const char *message)
-{
-    syslog(LOG_ERR, "%d %s %d: %s", linenum, message, errno, strerror(errno));
-    exit (EXIT_FAILURE);
-}
 
 void report_pgs(char *name) {
 	pid_t my_pid = getpid();

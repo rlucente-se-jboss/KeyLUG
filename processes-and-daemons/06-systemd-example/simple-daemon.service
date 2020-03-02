@@ -9,9 +9,10 @@ Restart=always
 RestartSec=1
 User=rlucente
 ExecStart=/usr/local/bin/simple-daemon
+//StandardInput=null
 StandardOutput=null
 StandardError=null
-UMask=022
+//UMask=022
 
 [Install]
 WantedBy=multi-user.target

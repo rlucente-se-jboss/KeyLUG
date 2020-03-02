@@ -29,6 +29,9 @@ int main (int argc, char **argv)
 	sleep(1);
 	report_pgs("Reaped Child");
 
+	/* wait briefly before exiting */
+	sleep(5);
+
         printf("Child exiting\n");
         return EXIT_SUCCESS;
 }

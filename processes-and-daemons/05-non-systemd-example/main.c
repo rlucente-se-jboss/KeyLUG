@@ -80,7 +80,7 @@ int main (int argc, char **argv)
 	}
 
 	/* set user file creation mask to zero */
-	umask(0);
+	umask(022);
 
         /* determine soft limit for open file descriptors */
         struct rlimit fd_limit;

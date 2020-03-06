@@ -9,8 +9,8 @@
 
 void die (int linenum, const char *message)
 {
-    syslog(LOG_ERR, "%d %s %d: %s", linenum, message, errno, strerror(errno));
-    exit (EXIT_FAILURE);
+	syslog(LOG_ERR, "%d %s %d: %s", linenum, message, errno, strerror(errno));
+	exit (EXIT_FAILURE);
 }
 
 void report_pgs(char *name) {

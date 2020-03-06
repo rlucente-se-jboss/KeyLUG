@@ -9,8 +9,8 @@
 
 void die (int linenum, const char *message)
 {
-    fprintf(stderr, "%d %s %d: %s\n", linenum, message, errno, strerror(errno));
-    exit (EXIT_FAILURE);
+	fprintf(stderr, "%d %s %d: %s\n", linenum, message, errno, strerror(errno));
+	exit (EXIT_FAILURE);
 }
 
 void report_pgs(char *name) {

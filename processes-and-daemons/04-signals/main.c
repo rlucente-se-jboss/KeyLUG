@@ -16,12 +16,12 @@ void parent_trap(int signum) {
 
 int main (int argc, char **argv)
 {
-        /* who am i */
-        report_pgs("My");
+	/* who am i */
+	report_pgs("My");
 
-        /* create new process */
-        pid_t pid = fork ();
-        if (pid == -1) {
+	/* create new process */
+	pid_t pid = fork ();
+	if (pid == -1) {
 		die(__LINE__, "failed to fork");
 	} else if (pid > 0) {
 		report_pgs("Parent");
@@ -30,9 +30,9 @@ int main (int argc, char **argv)
 		signal(SIGINT, &parent_trap);
 		sleep(1000);
 
-                /* make the child an orphan */
+		/* make the child an orphan */
 		syslog(LOG_INFO, "Parent exiting ...");
-                exit(EXIT_SUCCESS);
+		exit(EXIT_SUCCESS);
 	}
 
 	/* Child process gets here */
@@ -42,7 +42,7 @@ int main (int argc, char **argv)
 	signal(SIGINT, &child_trap);
 	sleep(1000);
 
-        syslog(LOG_INFO, "Child exiting ...");
-        return EXIT_SUCCESS;
+	syslog(LOG_INFO, "Child exiting ...");
+	return EXIT_SUCCESS;
 }
 

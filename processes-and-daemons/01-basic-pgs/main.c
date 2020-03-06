@@ -4,9 +4,9 @@
 
 int main (int argc, char **argv)
 {
-        /* who am i */
-        report_pgs("My");
+	/* who am i */
+	report_pgs("My");
 
-        return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 }
 

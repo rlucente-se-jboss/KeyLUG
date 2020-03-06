@@ -7,8 +7,6 @@
 
 #include "util.h"
 
-int running = 1;
-
 void die (int linenum, const char *message)
 {
     syslog(LOG_ERR, "%d %s %d: %s", linenum, message, errno, strerror(errno));

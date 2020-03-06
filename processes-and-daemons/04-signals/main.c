@@ -7,11 +7,11 @@
 #include "util.h"
 
 void child_trap(int signum) {
-	syslog(LOG_INFO, "Child exiting with signal %d", signum);
+	syslog(LOG_INFO, "Child caught signal %d", signum);
 }
 
 void parent_trap(int signum) {
-	syslog(LOG_INFO, "Parent exiting with signal %d", signum);
+	syslog(LOG_INFO, "Parent caught signal %d", signum);
 }
 
 int main (int argc, char **argv)
@@ -29,6 +29,9 @@ int main (int argc, char **argv)
 		/* wait until SIGINT (CTRL-C) */
 		signal(SIGINT, &parent_trap);
 		sleep(1000);
+
+//		int wstatus;
+//		wait(&wstatus);
 
 		/* make the child an orphan */
 		syslog(LOG_INFO, "Parent exiting ...");

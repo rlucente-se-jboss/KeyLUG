@@ -13,7 +13,7 @@
 static int running = 1;
 
 void handle_signal(int signum) {
-	syslog(LOG_NOTICE, "Signal %d received", signum);
+	syslog(LOG_NOTICE, "Caught signal %d", signum);
 	if (signum == SIGTERM) {
 		syslog(LOG_NOTICE, "Exiting on SIGTERM");
 		running = 0;

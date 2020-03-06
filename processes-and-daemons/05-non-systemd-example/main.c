@@ -79,7 +79,7 @@ int main (int argc, char **argv)
 		die(__LINE__, "failed to change to root directory");
 	}
 
-	/* set user file creation mask to zero */
+	/* set user file creation mask so files are rwxr-xr-x */
 	umask(022);
 
         /* determine soft limit for open file descriptors */

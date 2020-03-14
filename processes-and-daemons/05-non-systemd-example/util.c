@@ -1,4 +1,6 @@
 #include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -7,10 +9,25 @@
 
 #include "util.h"
 
-void die (int linenum, const char *message)
+void die(int line_num, const char * format, ...)
 {
-	syslog(LOG_ERR, "%d %s %d: %s", linenum, message, errno, strerror(errno));
-	exit (EXIT_FAILURE);
+    syslog(LOG_ERR, "Error at line number: %d", line_num);
+    fprintf(stderr, "\nError at line number: %d\n", line_num);
+
+    va_list vargs;
+    va_list vargs2;
+
+    va_start(vargs, format);
+    va_copy(vargs2, vargs);
+
+    vsyslog(LOG_ERR, format, vargs);
+    vfprintf(stderr, format, vargs2);
+    fprintf(stderr, "\n\n");
+
+    va_end(vargs);
+    va_end(vargs2);
+
+    exit(EXIT_FAILURE);
 }
 
 void report_pgs(char *name) {

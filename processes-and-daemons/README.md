@@ -71,21 +71,38 @@ In a separate terminal,
 
     journalctl -af
 
-To build and run,
+To build,
 
     cd ../05-non-systemd-example
     cmake .
     make
+
+Get usage help,
+
+    ./simple-daemon --help
+
+Run as non-daemon,
+
     ./simple-daemon
 
-Get the child pid from the journalctl window, and use it to exame
+CTRL-C will exit the program.
+
+Run as daemon in local directory as current user,
+
+    ./simple-daemon -d -l my.lock -p my.pid
+
+Run as daemon and drop privileges to user invoking sudo,
+
+    sudo ./simple-daemon -d
+
+Get the daemon pid from the journalctl window, and use it to examine
 the process
 
     less /proc/<PID>/status
 
 Then look at the UMask.  Next,
 
-    lsof -p <PID>
+    sudo lsof -p <PID>
 
 and look at the open file descriptors and default working directory.
 Finally, kill the process using
@@ -107,7 +124,7 @@ To build and run,
     sudo systemctl enable simple-daemon
     sudo systemctl start simple-daemon
 
-Get the child pid from the journalctl window, and use it to exame
+Get the child pid from the journalctl window, and use it to examinee
 the process
 
     less /proc/<PID>/status

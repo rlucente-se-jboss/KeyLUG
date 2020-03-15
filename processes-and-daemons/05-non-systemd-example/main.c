@@ -1,13 +1,13 @@
 #define _GNU_SOURCE
 #include <dirent.h>
 #include <fcntl.h>
+#include <getopt.h>
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -17,13 +17,6 @@
 #include "util.h"
 
 extern char **environ;
-
-/*
- * These should be passed as command line arguments
- */
-static const char *pid_filename = "/run/simple-daemon.pid";
-static const char *lock_filename = "/run/lock/simple-daemon.lock";
-static char *target_user;
 
 /*
  * Flag to keep daemon running. Set to zero on receive of SIGTERM
@@ -92,7 +85,7 @@ static void close_all_fds() {
  * are closed. This uses open file description locks as described in
  * "man 2 fcntl".
  */
-static void check_if_running() {
+static void check_if_running(char *lock_filename) {
     struct flock fl;
 
     lock_fd = open(lock_filename, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
@@ -172,7 +165,8 @@ static void reset_all_signal_handlers() {
 /*
  * This complies with "man 7 daemon" for SysV daemons
  */
-static void make_daemon() {
+static void make_daemon(char *lock_filename, char *pid_filename,
+    char *target_user) {
     /*
      * Item 1
      * Close all open file descriptors except standard input, output, and error
@@ -192,7 +186,7 @@ static void make_daemon() {
      * when it is verified at the same time that the PID previously stored in
      * the PID file no longer exists or belongs to a foreign process.
      */
-    check_if_running();
+    check_if_running(lock_filename);
 
     /*
      * Items 2 and 3
@@ -397,7 +391,7 @@ static void make_daemon() {
 
             /*
              * Item 14
-             * notify the original process started that initialization is complete.
+             * notify the original parent that initialization is complete.
              */
             write(pipefd[1], "0", 2);
             close(pipefd[1]);
@@ -409,9 +403,9 @@ static void make_daemon() {
  * Signal handler to shutdown on receipt of SIGTERM
  */
 void handle_signal(int signum) {
-    syslog(LOG_NOTICE, "Caught signal %d", signum);
-    if (signum == SIGTERM) {
-        syslog(LOG_NOTICE, "Exiting on SIGTERM");
+    log_info("Caught signal %d", signum);
+    if (signum == SIGTERM || signum == SIGINT) {
+        log_info("Exiting on signal");
         running = 0;
     }
     
@@ -420,50 +414,136 @@ void handle_signal(int signum) {
      */
 }
 
+void usage(char **argv) {
+    printf("Usage: %s [OPTIONS]\n\n", argv[0]);
+    printf("  -d, --daemon      Run process as a SysV-style daemon\n");
+    printf("  -l, --lockfile    File to ensure only one daemon as a time\n");
+    printf("                    Default is /run/lock/%s.lock\n", argv[0]);
+    printf("  -p, --pidfile     File to save the daemon pid\n");
+    printf("                    Default is /run/%s.pid\n", argv[0]);
+    printf("  -u, --user        User name for daemon to run as\n");
+    printf("                    Default is $SUDO_USER, otherwise $USER\n",
+        argv[0]);
+    printf("  -h, --help        These usage instructions\n\n");
+}
+
 int main (int argc, char **argv)
 {
-    /*
-     * This does not include parsing command line options which typically
-     * include an optional flag to run as a daemon, a path to the pid file, and
-     * a path to the lock file to ensure only one instance of the process is
-     * running.  This example will always spawn a daemon and use fixed
-     * locations for the pid file and lock file.  Make sure that any arguments
-     * are validated.
-     */
+    const char *const default_pid_dir = "/run/";
+    const char *const default_lock_dir = "/run/lock/";
+
+    char *pidfile = 0;
+    char *lockfile = 0;
+    char *user    = 0;
+    int  daemon_mode = 0;
 
     /*
-     * This executable should be invoked via "sudo" to enable proper writing of
-     * both the lock file and pid file.  The SUDO_USER environment variable is
-     * used for the target user name when dropping privileges.  Ideally, a
-     * command line option for the target user should be used instead with
-     * proper option parsing.
+     * set reasonable defaults for arguments for when daemon_mode is true
+     *
+     * pidfile is /run/argv[0].pid
+     * lockfile is /run/lock/argv[0].lock
+     * user is either user who invoked sudo or actual user
      */
-    target_user = getenv("SUDO_USER");
-    if (target_user == NULL)
-        die(__LINE__, "Unable to get the target user");
+
+    size_t pidfile_len = strlen(default_pid_dir) + strlen(argv[0]) + strlen(".pid") + 1;
+    size_t lockfile_len = strlen(default_lock_dir) + strlen(argv[0]) + strlen(".lock") + 1;
+
+    pidfile = (char *)malloc(pidfile_len * sizeof(char));
+    lockfile = (char *)malloc(lockfile_len * sizeof(char));
+
+    sprintf(pidfile, "%s%s.pid", default_pid_dir, argv[0]);
+    sprintf(lockfile, "%s%s.lock", default_lock_dir, argv[0]);
+
+    /* get user who invoked "sudo" if available */
+    user = getenv("SUDO_USER");
+    if (user == NULL)
+        user = getenv("USER");
+
+    /*
+     * parse command line arguments. Running as a daemon is optional so we can
+     * run the code in a shell.
+     */
+    static struct option long_options[] = {
+        {"daemon",   no_argument,       0, 'd'},
+        {"lockfile", required_argument, 0, 'l'},
+        {"pidfile",  required_argument, 0, 'p'},
+        {"user",     required_argument, 0, 'u'},
+        {"help",     no_argument,       0, 'h'},
+        {0,          0,                 0,  0}
+    };
+
+    while (1) {
+        int c = getopt_long(argc, argv, "dl:p:u:h", long_options, 0);
+        if (c == -1)
+            break;
+
+        switch (c) {
+        case 'd' :
+            daemon_mode = 1;
+            break;
+
+        case 'l' :
+            free(lockfile);
+            lockfile = optarg;
+            break;
+
+        case 'p' :
+            free(pidfile);
+            pidfile = optarg;
+            break;
+
+        case 'u' :
+            user = optarg;
+            break;
+
+        case 'h' :
+        default:
+            usage(argv);
+            exit(0);
+        }
+    }
+
+    if (optind < argc) {
+        fprintf(stderr, "Unexpected arguments:");
+        for (; optind < argc; ++optind) fprintf(stderr, " %s", argv[optind]);
+        fprintf(stderr, "\n\n");
+        usage(argv);
+        exit(1);
+    }
+
+    /*
+     * make sure full path for filenames since daemon will cd to /
+     */
+    char actual_lockfile[PATH_MAX];
+    char actual_pidfile[PATH_MAX];
+
+    realpath(lockfile, actual_lockfile);
+    realpath(pidfile, actual_pidfile);
 
     /*
      * daemonize the process
      */
-    make_daemon();
+    if (daemon_mode)
+        make_daemon(actual_lockfile, actual_pidfile, user);
 
     /*
-     * set handler for SIG_TERM and SIGHUP
+     * set handler for SIGHUP, SIGINT, and SIGTERM
      */
-    signal(SIGTERM, handle_signal);
     signal(SIGHUP, handle_signal);
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
 
     /*
      * do its daemon thing...
      */
-    syslog(LOG_INFO, "Now running");
+    log_info("Now running");
 
     int i = 0;
     while (running == 1) {
-        syslog(LOG_INFO, ((i++ % 2) == 0 ? "tick" : "tock"));
+        log_info(((i++ % 2) == 0 ? "tick" : "tock"));
         sleep(2);
     }
 
-    syslog(LOG_INFO, "Exiting");
+    log_info("Exiting");
     return EXIT_SUCCESS;
 }

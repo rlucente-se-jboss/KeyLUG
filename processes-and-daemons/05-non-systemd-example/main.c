@@ -480,12 +480,12 @@ int main (int argc, char **argv)
 
         case 'l' :
             free(lockfile);
-            lockfile = optarg;
+            strcpy(lockfile, optarg);
             break;
 
         case 'p' :
             free(pidfile);
-            pidfile = optarg;
+            strcpy(pidfile, optarg);
             break;
 
         case 'u' :

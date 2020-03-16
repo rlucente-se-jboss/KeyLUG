@@ -3,8 +3,10 @@ These projects can be used to explore processes and daemons in
 Linux.  All of these examples run on RHEL 8.x.  Developers can get
 RHEL 8 for free at https://developers.redhat.com
 
-Make sure to review the source code for each of the examples below.
-Everything is explained via comments.
+There's a lot of concepts to explore here, so tailor this to the
+time you have and the group you're talking to.  You can customize
+code to demonstrate key topics. Make sure to review the source code
+for each of the examples below.  Everything is explained via comments.
 
 ## Review Key Concepts
 In a terminal, type the following command:

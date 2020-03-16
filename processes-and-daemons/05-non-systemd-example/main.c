@@ -479,12 +479,10 @@ int main (int argc, char **argv)
             break;
 
         case 'l' :
-            free(lockfile);
             strcpy(lockfile, optarg);
             break;
 
         case 'p' :
-            free(pidfile);
             strcpy(pidfile, optarg);
             break;
 

@@ -432,8 +432,8 @@ int main (int argc, char **argv)
     const char *const default_pid_dir = "/run/";
     const char *const default_lock_dir = "/run/lock/";
 
-    char *pidfile = 0;
-    char *lockfile = 0;
+    char pidfile[PATH_MAX];
+    char lockfile[PATH_MAX];
     char *user    = 0;
     int  daemon_mode = 0;
 
@@ -444,12 +444,8 @@ int main (int argc, char **argv)
      * lockfile is /run/lock/argv[0].lock
      * user is either user who invoked sudo or actual user
      */
-
-    size_t pidfile_len = strlen(default_pid_dir) + strlen(argv[0]) + strlen(".pid") + 1;
-    size_t lockfile_len = strlen(default_lock_dir) + strlen(argv[0]) + strlen(".lock") + 1;
-
-    pidfile = (char *)malloc(pidfile_len * sizeof(char));
-    lockfile = (char *)malloc(lockfile_len * sizeof(char));
+    memset(pidfile, 0, PATH_MAX);
+    memset(lockfile, 0, PATH_MAX);
 
     sprintf(pidfile, "%s%s.pid", default_pid_dir, argv[0]);
     sprintf(lockfile, "%s%s.lock", default_lock_dir, argv[0]);

@@ -235,10 +235,9 @@ static void make_daemon(char *lock_filename, char *pid_filename,
         /*
          * wait for status from the daemon process
          */
-        char result[3];
-        memset(result, 0, 3);
+        char result;
 
-        if (read(pipefd[0], &result, 3) == -1)
+        if (read(pipefd[0], &result, 1) == -1)
             die(__LINE__, "unable to read the pipe");
 
         /*
@@ -253,10 +252,10 @@ static void make_daemon(char *lock_filename, char *pid_filename,
          * initialization is complete and all external communication channels
          * are established and accessible.
          */
-        if (result[0] == '0')
+        if (result == '0')
             exit(EXIT_SUCCESS);
         else
-            die(__LINE__, "daemon failed at %s", result);
+            die(__LINE__, "daemon failed at %c", result);
     } else {
         /*
          * We're the first child process
@@ -274,7 +273,7 @@ static void make_daemon(char *lock_filename, char *pid_filename,
          * Detach from any terminal and create an independent session
          */
         if (setsid() == -1) {
-            write(pipefd[1], "1", 2);
+            write(pipefd[1], "1", 1);
             exit(EXIT_FAILURE);
         }
 
@@ -285,7 +284,7 @@ static void make_daemon(char *lock_filename, char *pid_filename,
          */
         pid = fork();
         if (pid == -1) {
-            write(pipefd[1], "2", 2);
+            write(pipefd[1], "2", 1);
             exit(EXIT_FAILURE);
         } else if (pid > 0) {
             /*
@@ -315,17 +314,17 @@ static void make_daemon(char *lock_filename, char *pid_filename,
                 close(i);
 
             if (open("/dev/null", O_RDWR) == -1) {
-                write(pipefd[1], "3", 2);
+                write(pipefd[1], "3", 1);
                 exit(EXIT_FAILURE);
             }
 
             if (dup(0) == -1) {
-                write(pipefd[1], "4", 2);
+                write(pipefd[1], "4", 1);
                 exit(EXIT_FAILURE);
             }
 
             if (dup(0) == -1) {
-                write(pipefd[1], "5", 2);
+                write(pipefd[1], "5", 1);
                 exit(EXIT_FAILURE);
             }
             
@@ -344,7 +343,7 @@ static void make_daemon(char *lock_filename, char *pid_filename,
              * from being unmounted.
              */
             if (chdir ("/") == -1) {
-                write(pipefd[1], "6", 2);
+                write(pipefd[1], "6", 1);
                 exit(EXIT_FAILURE);
             }
 
@@ -358,13 +357,13 @@ static void make_daemon(char *lock_filename, char *pid_filename,
 
             pid_file = fopen(pid_filename, "w");
             if (pid_file == NULL) {
-                write(pipefd[1], "7", 2);
+                write(pipefd[1], "7", 1);
                 exit(EXIT_FAILURE);
             }
 
             int rc = fprintf(pid_file, "%d\n", getpid());
             if (rc < 0) {
-                write(pipefd[1], "8", 2);
+                write(pipefd[1], "8", 1);
                 exit(EXIT_FAILURE);
             }
 
@@ -379,12 +378,12 @@ static void make_daemon(char *lock_filename, char *pid_filename,
                 
                 pwd_entry = getpwnam(target_user);
                 if (pwd_entry == NULL) {
-                    write(pipefd[1], "9", 2);
+                    write(pipefd[1], "9", 1);
                     exit(EXIT_FAILURE);
                 }
 
                 if (setuid(pwd_entry->pw_uid) == -1) {
-                    write(pipefd[1], "10", 3);
+                    write(pipefd[1], "A", 1);
                     exit(EXIT_FAILURE);
                 }
             }
